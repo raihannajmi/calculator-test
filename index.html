@@ -1,21 +1,449 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculator Panel</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLT Floor Panel Properties Calculator</title>
+  <meta name="description" content="Interactive CLT Cross-Laminated Timber panel properties calculator using Shear Analogy (3–9 layers) and Gamma Method (3 or 5 layers).">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Tokens ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    <!-- CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    :root {
+      --bg:        #0d1117;
+      --bg2:       #161b26;
+      --bg3:       #1e2433;
+      --surface:   #232c3f;
+      --border:    #2e3a52;
+      --border2:   #3d4f6a;
+
+      --amber:     #e8a84f;
+      --amber-dim: #b07a32;
+      --teal:      #38bdf8;
+      --teal-dim:  #1e7aa8;
+      --green:     #4ade80;
+      --red:       #f87171;
+      --violet:    #a78bfa;
+
+      --text:      #e2e8f0;
+      --text-2:    #94a3b8;
+      --text-3:    #64748b;
+
+      --radius:    12px;
+      --radius-sm: 8px;
+      --shadow:    0 4px 24px rgba(0,0,0,.4);
+      --glow-amber: 0 0 20px rgba(232,168,79,.18);
+      --glow-teal:  0 0 20px rgba(56,189,248,.18);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────────────────── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 0 20px 80px; }
+
+    /* ── Header ──────────────────────────────────────────────────────────── */
+    header {
+      padding: 48px 0 36px;
+      text-align: center;
+      position: relative;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--amber), transparent);
+    }
+    .header-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 3px;
+      color: var(--amber); text-transform: uppercase; margin-bottom: 12px;
+    }
+    h1 {
+      font-size: clamp(24px, 4vw, 38px);
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 30%, var(--amber));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .header-sub { color: var(--text-2); font-size: 15px; }
+
+    /* ── Card ────────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-size: 13px; font-weight: 600; letter-spacing: 1.5px;
+      color: var(--text-3); text-transform: uppercase;
+      margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+    }
+    .card-title::before {
+      content: ''; display: block; width: 3px; height: 14px;
+      border-radius: 2px; background: var(--amber);
+    }
+
+    /* ── Method toggle ───────────────────────────────────────────────────── */
+    .method-toggle {
+      display: flex; gap: 8px; margin-bottom: 24px;
+      background: var(--bg3); border-radius: 10px; padding: 4px;
+    }
+    .method-btn {
+      flex: 1; padding: 12px 20px; border: none; border-radius: 8px;
+      font-family: inherit; font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all .25s;
+      color: var(--text-2); background: transparent;
+    }
+    .method-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 2px 12px rgba(0,0,0,.35);
+    }
+    #btn-sa.active  { color: var(--amber); border: 1px solid var(--amber-dim); }
+    #btn-gamma.active { color: var(--teal);  border: 1px solid var(--teal-dim);  }
+
+    .method-info {
+      font-size: 12px; color: var(--text-3);
+      background: var(--bg3); border-radius: var(--radius-sm);
+      padding: 10px 14px; margin-bottom: 20px;
+    }
+    .method-info strong { color: var(--text-2); }
+
+    /* ── Form grid ───────────────────────────────────────────────────────── */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+    .field-group label { font-size: 12px; color: var(--text-2); font-weight: 500; }
+    .field-input, .field-select {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text);
+      padding: 10px 14px; font-family: inherit; font-size: 14px;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none; width: 100%;
+    }
+    .field-input:focus, .field-select:focus {
+      border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,168,79,.12);
+    }
+    .field-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+    /* ── Layer controls ──────────────────────────────────────────────────── */
+    .layer-controls {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .layer-controls-left { display: flex; align-items: center; gap: 12px; }
+    .layer-count-badge {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 16px;
+      font-size: 14px; font-weight: 600; color: var(--amber);
+    }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg3); color: var(--text-2); font-size: 18px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+    }
+    .icon-btn:hover { border-color: var(--amber); color: var(--amber); }
+
+    /* ── Layer rows ──────────────────────────────────────────────────────── */
+    #layer-inputs { display: flex; flex-direction: column; gap: 12px; }
+    .layer-row {
+      display: grid;
+      grid-template-columns: 36px 1fr 1.6fr 1fr;
+      gap: 12px; align-items: end;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px 16px;
+      animation: slideIn .2s ease;
+    }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 700px) { .layer-row { grid-template-columns: 36px 1fr 1fr; } .layer-row .field-group:last-child { grid-column: 2 / -1; } }
+
+    .layer-badge {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--amber-dim), var(--amber));
+      color: #1a1000; font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Span input row ──────────────────────────────────────────────────── */
+    #span-row { margin-top: 16px; max-width: 280px; }
+
+    /* ── Action buttons ──────────────────────────────────────────────────── */
+    .action-row { display: flex; gap: 12px; margin-top: 24px; }
+    .btn-primary {
+      flex: 1; padding: 14px 28px; border: none; border-radius: 10px;
+      font-family: inherit; font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: all .25s;
+      background: linear-gradient(135deg, var(--amber-dim), var(--amber));
+      color: #1a0f00;
+      box-shadow: 0 4px 16px rgba(232,168,79,.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(232,168,79,.45); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-secondary {
+      padding: 14px 20px; border: 1px solid var(--border); border-radius: 10px;
+      font-family: inherit; font-size: 15px; font-weight: 500;
+      cursor: pointer; background: transparent; color: var(--text-2);
+      transition: all .25s;
+    }
+    .btn-secondary:hover { border-color: var(--text-2); color: var(--text); }
+
+    /* ── Error ───────────────────────────────────────────────────────────── */
+    #error-msg {
+      background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3);
+      border-radius: var(--radius-sm); padding: 12px 16px; margin-top: 16px;
+      color: var(--red); font-size: 14px;
+    }
+
+    /* ── Output section ──────────────────────────────────────────────────── */
+    #output-section { animation: fadeUp .35s ease; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Summary cards ───────────────────────────────────────────────────── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px; margin-bottom: 24px;
+    }
+    .summary-card {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 18px 20px;
+      transition: box-shadow .2s;
+    }
+    .summary-card:hover { box-shadow: var(--glow-amber); border-color: var(--amber-dim); }
+    .summary-label { font-size: 11px; color: var(--text-3); font-weight: 500; letter-spacing: .5px; margin-bottom: 8px; text-transform: uppercase; }
+    .summary-value { font-size: 15px; font-weight: 600; color: var(--amber); font-family: 'JetBrains Mono', monospace; word-break: break-word; }
+
+    /* ── Layout: result columns ──────────────────────────────────────────── */
+    .result-cols {
+      display: grid; grid-template-columns: 1fr 260px; gap: 20px; align-items: start;
+    }
+    @media (max-width: 800px) { .result-cols { grid-template-columns: 1fr; } }
+
+    /* ── Table ───────────────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    thead th {
+      background: var(--bg3); color: var(--text-3); font-weight: 600;
+      text-transform: uppercase; font-size: 11px; letter-spacing: .5px;
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      white-space: nowrap; text-align: right;
+    }
+    thead th:first-child { text-align: center; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+    tbody tr:hover { background: var(--surface); }
+    tbody td { padding: 12px 14px; vertical-align: middle; }
+    .tbl-val { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-2); }
+    .highlight-col { color: var(--amber) !important; font-weight: 600; }
+
+    .layer-pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 6px;
+      background: var(--surface); color: var(--amber);
+      font-size: 12px; font-weight: 700; margin: 0 auto; display: flex;
+    }
+    .ori-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace;
+    }
+    .ori-0  { background: rgba(232,168,79,.15); color: var(--amber); border: 1px solid rgba(232,168,79,.3); }
+    .ori-90 { background: rgba(74,222,128,.1);  color: var(--green); border: 1px solid rgba(74,222,128,.25); }
+
+    /* ── Cross-section SVG panel ─────────────────────────────────────────── */
+    .cross-section-card {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 16px;
+    }
+    .cross-section-title {
+      font-size: 12px; color: var(--text-3); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
+    }
+    #cross-section-canvas { width: 100%; min-height: 120px; }
+
+    /* ── Formula note ────────────────────────────────────────────────────── */
+    .formula-row {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px;
+    }
+    .formula-chip {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 16px; font-size: 13px; flex: 1; min-width: 200px;
+    }
+    .formula-chip .fc-label { font-size: 11px; color: var(--text-3); margin-bottom: 4px; }
+    .formula-chip .fc-val { font-family: 'JetBrains Mono', monospace; color: var(--violet); font-size: 13px; }
+
+    .hidden { display: none !important; }
+  </style>
 </head>
 <body>
-    <div class="container py-4">
-        <h1 class="mb-4">Calculator Panel</h1>
-        <!-- Write Input On Here -->
+<div class="page">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header>
+    <p class="header-label">Structural Engineering Tool</p>
+    <h1>CLT Floor Panel Properties</h1>
+    <p class="header-sub">Cross-Laminated Timber · Shear Analogy &amp; Gamma Method</p>
+  </header>
+
+  <!-- ── Input Section ──────────────────────────────────────────────────── -->
+  <section aria-label="Input Section">
+
+    <!-- Method selector -->
+    <div class="card">
+      <p class="card-title">Analytical Method</p>
+      <div class="method-toggle">
+        <button class="method-btn active" id="btn-sa">⚙ Shear Analogy</button>
+        <button class="method-btn" id="btn-gamma">γ Gamma Method</button>
+      </div>
+      <p class="method-info" id="sa-info">
+        <strong>Shear Analogy:</strong> Supports <strong>3 – 9 layers</strong>.
+        Layup must be <strong>symmetric</strong> (top-to-bottom mirror). Calculates both EI<sub>eff</sub> and GA<sub>eff</sub>.
+      </p>
+      <p class="method-info hidden" id="gamma-info">
+        <strong>Gamma (γ) Method:</strong> Supports <strong>3 or 5 layers only</strong>.
+        Based on Eurocode 5 Annex B. Requires a span length to compute the γ factor. Calculates EI<sub>eff</sub> only.
+      </p>
+
+      <!-- Layup name -->
+      <div class="field-group" style="max-width:320px; margin-bottom:20px;">
+        <label for="layup-name">Layup Name</label>
+        <input type="text" id="layup-name" class="field-input" value="CLT Panel" placeholder="e.g. CLT-175-5s">
+      </div>
+
+      <!-- Span (Gamma only) -->
+      <div id="span-row" class="field-group hidden">
+        <label for="span-input">Span Length (mm)</label>
+        <input type="number" id="span-input" class="field-input" value="4000" min="100" step="100" style="max-width:200px;">
+      </div>
     </div>
 
-    <!-- Script -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="calculator.js"></script>
+    <!-- Layers -->
+    <div class="card">
+      <p class="card-title">Layer Stack</p>
+
+      <div class="layer-controls">
+        <div class="layer-controls-left">
+          <span style="font-size:13px; color:var(--text-2);">Layers:</span>
+          <div class="layer-count-badge"><span id="layer-count-display">3</span></div>
+          <button class="icon-btn" id="btn-add-layer" title="Add layer">+</button>
+          <button class="icon-btn" id="btn-remove-layer" title="Remove layer">−</button>
+        </div>
+        <span style="font-size:12px; color:var(--text-3);">↑ top → bottom ↓</span>
+      </div>
+
+      <div id="layer-inputs"></div>
+
+      <div id="error-msg" class="hidden"></div>
+
+      <div class="action-row">
+        <button class="btn-primary" id="btn-calculate">Calculate Panel Properties</button>
+        <button class="btn-secondary" id="btn-reset">Reset</button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ── Output Section ─────────────────────────────────────────────────── -->
+  <section id="output-section" class="hidden" aria-label="Output Section">
+
+    <div class="card">
+      <p class="card-title">Panel Properties — Summary</p>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <p class="summary-label">Method</p>
+          <p class="summary-value" id="res-method">—</p>
+        </div>
+        <div class="summary-card">
+          <p class="summary-label">Layers</p>
+          <p class="summary-value" id="res-layers">—</p>
+        </div>
+        <div class="summary-card">
+          <p class="summary-label">Total Thickness</p>
+          <p class="summary-value" id="res-thickness">—</p>
+        </div>
+        <div class="summary-card">
+          <p class="summary-label">EI<sub>eff</sub> (N·mm²/mm)</p>
+          <p class="summary-value" id="res-EI">—</p>
+        </div>
+        <div class="summary-card">
+          <p class="summary-label">GA<sub>eff</sub> (N/mm)</p>
+          <p class="summary-value" id="res-GA">—</p>
+        </div>
+      </div>
+
+      <!-- Formula reminders -->
+      <div class="formula-row">
+        <div class="formula-chip">
+          <p class="fc-label">EI<sub>eff</sub> formula</p>
+          <p class="fc-val">Σ (Eᵢ·Iᵢ + Eᵢ·Aᵢ·zᵢ²)</p>
+        </div>
+        <div class="formula-chip" id="ga-formula-chip">
+          <p class="fc-label">GA<sub>eff</sub> formula (Shear Analogy)</p>
+          <p class="fc-val">a² / Σ(αᵢ·tᵢ / Gᵢ)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Per-layer table + cross-section -->
+    <div class="card">
+      <p class="card-title">Per-Layer Breakdown</p>
+
+      <div class="result-cols">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:center;">#</th>
+                <th style="text-align:right;">Thickness</th>
+                <th style="text-align:right;">Orientation</th>
+                <th style="text-align:right;">E (N/mm²)</th>
+                <th style="text-align:right;">G (N/mm²)</th>
+                <th style="text-align:right;">z (mm)</th>
+                <th id="gamma-col-header" style="display:none; text-align:right;">γ</th>
+                <th style="text-align:right;">EI<sub>self</sub></th>
+                <th style="text-align:right;">EI<sub>steiner</sub></th>
+                <th style="text-align:right;">EI<sub>total</sub></th>
+              </tr>
+            </thead>
+            <tbody id="layer-table-body"></tbody>
+          </table>
+        </div>
+
+        <div class="cross-section-card">
+          <p class="cross-section-title">Cross Section</p>
+          <div id="cross-section-canvas"></div>
+          <p style="font-size:11px; color:var(--text-3); margin-top:12px; text-align:center;">
+            <span style="color:var(--amber);">■</span> 0° Longitudinal &nbsp;
+            <span style="color:#4ade80;">■</span> 90° Transverse
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+<!-- Scripts — load order matters: types → calculation → controller -->
+<script src="type/material-grade-type.js"></script>
+<script src="type/clt-layer-type.js"></script>
+<script src="type/clt-layup-type.js"></script>
+<script src="type/clt-layer-properties-type.js"></script>
+<script src="type/panel-properties-type.js"></script>
+<script src="calculation/panel-properties.js"></script>
+<script src="calculator.js"></script>
 </body>
 </html>
