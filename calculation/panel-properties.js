@@ -1,17 +1,15 @@
 /**
  * Class Panel Properties is used to calculate the properties of panel CLT Layup.
+ * Panel properties can calculate
+ *  - Shear Analogy Method
+ *  - Gamma Method
  *
- * How to use:
- *   const result = new ShearAnalogyMethod().calculate(layup);  // → PanelPropertiesType
- *   const result = new GammaMethod().calculate(layup, span);   // → PanelPropertiesType
- *
- * Shear Analogy: 3–9 layers, symmetric layup required.
- * Gamma Method : 3 or 5 layers only.
- *
- * All values are per unit width (1 mm strip).
+ * How to use :
+ * calculate(CLTLayup) => PanelProperties
  */
 
-// ─── Base ──────────────────────────────────────────────────────────────────────
+
+// Base class for panel properties
 class PanelProperties {
     /**
      * @param {CLTLayupType} cltLayup
@@ -40,7 +38,6 @@ class PanelProperties {
     }
 }
 
-// ─── Shear Analogy Method ──────────────────────────────────────────────────────
 class ShearAnalogyMethod extends PanelProperties {
     /**
      * Validates and calculates using Shear Analogy method.
@@ -109,7 +106,6 @@ class ShearAnalogyMethod extends PanelProperties {
     }
 }
 
-// ─── Gamma Method ──────────────────────────────────────────────────────────────
 class GammaMethod extends PanelProperties {
     /**
      * Validates and calculates using Gamma (γ) method.
@@ -120,6 +116,7 @@ class GammaMethod extends PanelProperties {
      * @returns {PanelPropertiesType}
      */
     calculate(cltLayup, span = 3000) {
+        // do calculation for Gamma Method
         const layers = cltLayup.getLayers();
         const n = layers.length;
 
