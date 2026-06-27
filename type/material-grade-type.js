@@ -22,8 +22,14 @@ class MaterialGrade {
 
     static get GRADES() {
         return {
-            'C24': new MaterialGrade('C24', 11000, 370, 690, 50),
-            'C16': new MaterialGrade('C16', 8000, 270, 500, 40),
+            // Australian MGP grades (AS 1720.1)
+            'MGP10': new MaterialGrade('MGP10', 10000, 333, 625, 50),
+            'MGP12': new MaterialGrade('MGP12', 12000, 400, 750, 60),
+            'MGP15': new MaterialGrade('MGP15', 15000, 500, 940, 70),
+            // European softwood grades (EN 338)
+            'C16':   new MaterialGrade('C16',   8000,  270, 500, 40),
+            'C24':   new MaterialGrade('C24',   11000, 370, 690, 50),
+            // Glulam grades (EN 14080)
             'GL24h': new MaterialGrade('GL24h', 11500, 300, 650, 65),
             'GL28h': new MaterialGrade('GL28h', 12600, 390, 780, 70),
             'GL32h': new MaterialGrade('GL32h', 13700, 460, 850, 80),

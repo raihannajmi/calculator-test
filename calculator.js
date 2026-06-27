@@ -9,7 +9,7 @@ const MAX_LAYERS_SA = 9;
 const GAMMA_ALLOWED = [3, 5];
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let layerCount = 3;
+let layerCount = 5;
 let currentMethod = 'ShearAnalogy'; // 'ShearAnalogy' | 'Gamma'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('btn-remove-layer').addEventListener('click', removeLayer);
     $('btn-calculate').addEventListener('click', calculate);
     $('btn-reset').addEventListener('click', () => {
-        layerCount = 3;
+        layerCount = 5;
         setMethod(currentMethod);
         $('output-section').classList.add('hidden');
         clearError();
